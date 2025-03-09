@@ -45,8 +45,3 @@ async def create_tables():
 @app.on_event("startup")
 async def startup_event():
     await create_tables()
-
-
-# Vercel expects ASGI-compatible callable
-def handler():
-    return app
