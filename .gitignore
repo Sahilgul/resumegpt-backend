@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.swp
+
+# Virtual Environments
+myvenv/
+.env
+.env.local
+
+# Logs & Cache
+logs/
+*.log
+*.sqlite3
+db.sqlite3
+
+# Byte-compiled files
+*.pyc
+*.pyo
+
+# IDE files
+.vscode/
+.idea/
+*.iml
+
+# OS-specific
+.DS_Store
+Thumbs.db
