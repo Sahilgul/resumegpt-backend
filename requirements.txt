@@ -35,3 +35,4 @@ typing_extensions==4.12.2
 uvicorn==0.15.0
 wsproto==1.0.0
 zstandard==0.23.0
+google-cloud-secret-manager

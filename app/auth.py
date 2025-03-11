@@ -6,7 +6,6 @@ from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
-from dotenv import load_dotenv
 from .database import get_db
 from . import models
 from pydantic import BaseModel
@@ -14,10 +13,33 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 
-# Load environment variables
-load_dotenv()
+from google.cloud import secretmanager
+# Initialize Google Secret Manager client
+def access_secret_version(secret_id: str, project_id="stalwart-star-448320-c8"):
+    """
+    Fetches a secret from Google Secret Manager.
+    """
+    client = secretmanager.SecretManagerServiceClient()
+    name = f"projects/{project_id}/secrets/{secret_id}/versions/latest"
+    
+    try:
+        response = client.access_secret_version(name=name)
+        return response.payload.data.decode("UTF-8")
+    except Exception as e:
+        print(f"Error retrieving secret {secret_id}: {e}")
+        return None
+    
 
+# Load secrets from Google Secret Manager
+GCP_PROJECT_ID = "stalwart-star-448320-c8" 
 # Security configurations
+
+os.environ["SECRET_KEY"] = access_secret_version("SECRET_KEY") or GCP_PROJECT_ID
+os.environ["ALGORITHM"] = access_secret_version("ALGORITHM") or ""
+
+os.environ["ACCESS_TOKEN_EXPIRE_MINUTES"] = access_secret_version("ACCESS_TOKEN_EXPIRE_MINUTES")
+
+
 SECRET_KEY = os.getenv("SECRET_KEY") 
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))  # Default to 30 mins
@@ -75,7 +97,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
         token_data = TokenData(username=username)
     except JWTError:
         raise credentials_exception
-    user = get_user(db, username=token_data.username)
+    user = await get_user(db, username=token_data.username)
     if user is None:
         raise credentials_exception
     return user
@@ -86,7 +108,6 @@ async def get_current_active_user(current_user = Depends(get_current_user)):
     return current_user
 
 async def get_current_active_user(current_user: models.User = Depends(get_current_user)):
-    current_user = await current_user  # ✅ Await the coroutine
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user

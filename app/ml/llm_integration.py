@@ -4,15 +4,34 @@ import numpy as np
 import requests
 from typing import Dict, List, Tuple
 from groq import Groq
-from dotenv import load_dotenv
-
-
 from langchain_core.output_parsers import JsonOutputParser
 
 
-# Load environment variables
-load_dotenv()
+from google.cloud import secretmanager
+# Initialize Google Secret Manager client
+def access_secret_version(secret_id: str, project_id="stalwart-star-448320-c8"):
+    """
+    Fetches a secret from Google Secret Manager.
+    """
+    client = secretmanager.SecretManagerServiceClient()
+    name = f"projects/{project_id}/secrets/{secret_id}/versions/latest"
+    
+    try:
+        response = client.access_secret_version(name=name)
+        return response.payload.data.decode("UTF-8")
+    except Exception as e:
+        print(f"Error retrieving secret {secret_id}: {e}")
+        return None
+    
+os.environ["GROQ_API_KEY"] = access_secret_version("GROQ_API_KEY") or ""
+os.environ["HF_TOKEN"] = access_secret_version("HF_TOKEN") or ""
 
+# Set GROQ_MODEL with a default value if not in secrets
+os.environ["GROQ_MODEL"] = access_secret_version("GROQ_MODEL") or "gemma2-9b-it"
+
+
+# Load secrets from Google Secret Manager
+GCP_PROJECT_ID = "stalwart-star-448320-c8" 
 # Load Groq API key
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 GROQ_MODEL = os.getenv("GROQ_MODEL", "gemma2-9b-it")  # Default model
@@ -24,8 +43,6 @@ MODEL_ID = "sentence-transformers/all-MiniLM-L6-v2"
 API_URL = f"https://api-inference.huggingface.co/pipeline/feature-extraction/{MODEL_ID}"
 # Headers
 HEADERS = {"Authorization": f"Bearer {HF_TOKEN}"}
-
-
 
 output_parser = JsonOutputParser()
 

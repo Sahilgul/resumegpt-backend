@@ -17,14 +17,16 @@ origins = [
     "http://localhost:3000",
     "http://localhost:8000",
     "http://localhost",
+    "http://localhost:5173",
+    "*"
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=["http://localhost:5173"],  # Explicitly set frontend origin
+    allow_credentials=True,  # Allow cookies and Authorization headers
+    allow_methods=["*"],  # Allow all HTTP methods
+    allow_headers=["*"],  # Allow all headers including Authorization
 )
 
 # Include routers

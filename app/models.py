@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, Integer, String, ForeignKey, DateTime, Text, JSON
+from sqlalchemy import Boolean, Column, Integer, String, ForeignKey, DateTime, Text, JSON, Float
 from sqlalchemy.orm import relationship
 import datetime
 from .database import Base
@@ -23,12 +23,16 @@ class Resume(Base):
     name = Column(String(255))  # Added length
     content = Column(Text)
     file_path = Column(String(500), nullable=True)  # Added length
+    filename = Column(String, nullable=False)
     created_at = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
     updated_at = Column(DateTime(timezone=True), default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))  # Ensure foreign key constraints
+    
+    match_score = Column(Float, nullable=True)
 
     owner = relationship("User", back_populates="resumes")
-    analyses = relationship("ResumeAnalysis", back_populates="resume")
+    # analyses = relationship("ResumeAnalysis", back_populates="resume")
+    analyses = relationship("ResumeAnalysis", back_populates="resume", cascade="all, delete-orphan")
 
 class ResumeAnalysis(Base):
     __tablename__ = "resume_analyses"
